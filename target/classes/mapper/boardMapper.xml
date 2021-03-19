@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- IBoardDao전용 Mapper: 게시판 관련 SQL문 -->
+<mapper namespace="com.board.icia.dao.IBoardDao">
+	<select id="getBoardList" parameterType="Integer" resultType="board">
+	<!-- 	<![CDATA[
+			SELECT * FROM BLIST_1 WHERE RN>=#{pageNum}*10-9 AND RN<=#{pageNum}*10
+		]]> -->
+	<!-- 게시글이 많을 때 속도를 업하기 위해 -->
+	<!-- select hint:/*+INDEX_DESC(B PK_B_NUM)*/ : 인덱스를 타고 내림차순 검색 -->
+	<!-- 시너님 또는 원 테이블명을 쓰던지 힌트와 일치해야 함. -->
+	<![CDATA[
+		SELECT * FROM ( 
+						SELECT /* + INDEX_DESC(BOARD PK_B_NUM) */ ROWNUM RN, B.*
+						FROM B
+						WHERE ROWNUM<=#{pageNum}*10
+					  )
+				WHERE RN>=#{pageNum}*10-9
+	]]>	
+	</select>
+	
+	<resultMap id="mapForBoardFile" type="boardFile">
+		<id column="BF_NUM" property="bf_num" /> <!-- 검색할때 속도가 빨라짐 -->
+		<result column="BF_ORIGNAME" property="bf_origname" />
+		<result column="BF_SYSNAME" property="bf_sysname" />
+	</resultMap>
+	
+	<resultMap id="mapForBoard" type="board">
+		<id column="B_NUM" property="b_num" />
+		<result column="B_TITLE" property="b_title" />
+		<result column="B_CONTENTS" property="b_contents" javaType="String" jdbcType="NCLOB" />
+		<result column="B_ID" property="b_id" />
+		<result column="B_DATE" property="b_date" />
+		<result column="B_VIEWS" property="b_views" />
+		<collection property="bfList" javaType="ArrayList" resultMap="mapForBoardFile" />
+	</resultMap>
+	
+	<select id="getContents" parameterType="Integer" resultMap="mapForBoard">
+			<!-- SELECT * FROM BOARD WHERE B_NUM=#{bNum} -->
+			<!--  resultMap, collection 이용한 sql -->
+			SELECT * FROM B LEFT OUTER JOIN BF ON B.B_NUM = BF.BF_BNUM WHERE B.B_NUM=#{bNum}
+	</select>
+	
+<!-- 	<select id="getContents" parameterType="Integer" resultType="board">
+	 	SELECT * FROM BOARD WHERE B_NUM=#{bNum} 
+	</select> -->
+	
+	<!-- r_date가 Timestamp -->
+<!-- 	<select id="getReplyList" parameterType="Integer" resultType="reply"> mybatis-config등록하고 쓰자!
+		<![CDATA[
+			SELECT * FROM RLIST WHERE R_BNUM=#{bNum}
+		]]>
+	</select> -->
+	<!-- r_date가 String -->
+	<select id="getReplyList" parameterType="Integer" resultType="reply"> <!-- mybatis-config등록하고 쓰자! -->
+		<![CDATA[
+			SELECT R_ID, R_CONTENTS, TO_CHAR(R_DATE,'YY-MM-DD HH24:MI:SS') R_DATE FROM RLIST WHERE R_BNUM=#{bNum}
+		]]>
+	</select>
+	<select id="getBoardFileList" parameterType="Integer" resultType="boardFile">
+		<![CDATA[
+			SELECT BF_ORIGNAME, BF_SYSNAME FROM BOARDFILE WHERE BF_BNUM=#{bNum}
+		]]>
+	</select>
+	<insert id="replyInsert" parameterType="reply"> <!-- resultType은 셀렉트에서만 쓰기!!! -->
+		<![CDATA[
+			INSERT INTO REPLY VALUES(R_SEQ.NEXTVAL,#{r_bnum},#{r_contents},#{r_id},default)
+		]]>
+	</insert>
+	<!-- useGeneratedKeys="true" 자동증가값을 얻을 수 있따.
+		 keyProperty="b_num" my-sql은 명시해야 함 -->
+	<insert id="boardWrite" parameterType="board" useGeneratedKeys="true" keyProperty="b_num">
+		<selectKey keyProperty="b_num" resultType="int" order="BEFORE"> <!-- before:아래 SQL문보다 먼저 실행되도록 -->
+			SELECT B_SEQ.NEXTVAL FROM DUAL <!-- 시퀀스를 먼저하고 담아서 아래에도 사용함 -->
+		</selectKey>
+			INSERT INTO BOARD VALUES(#{b_num},#{b_title},#{b_contents},#{b_id},default,default)
+	</insert>
+	<insert id="fileInsert" parameterType="Map">
+		<![CDATA[
+			INSERT INTO BOARDFILE VALUES(BF_SEQ.NEXTVAL,#{bnum},#{origFileName},#{sysFileName})
+		]]>
+	</insert>
+	
+	<select id="myBatisTest" resultType="member">
+			<!-- SELECT * FROM MINFO WHERE ${cName}=#{point}-->
+			SELECT * FROM MINFO WHERE
+				<if test="point!=null">
+					${cName}=#{point} and
+				</if>
+				ROWNUM=1
+	</select>
+
+	<select id="myBatisTestMap" parameterType="Map" resultType="Map">
+			<!-- SELECT * FROM MINFO WHERE ${cName}=#{search} -->
+			SELECT * FROM MINFO WHERE
+				<if test="search!=null">
+					${cName}=#{search} and
+				</if>
+				ROWNUM=1
+	</select>
+	
+</mapper>

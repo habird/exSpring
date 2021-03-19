@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 회원관련 SQL문 작성 -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+<mapper namespace="memberMapper">
+	<select id="getLoginResult" parameterType="com.board.icia.bean.Member" resultType="boolean"> 정수는 Integer
+	dao에 있는 객체와 id로 연결하는 것을 매핑이라고 한다!
+		SELECT COUNT(*) FROM MEMBER WHERE ID=#{id} AND PW=#{pw}  #{} : mybatis 문법
+	</select>
+</mapper> -->
+
+<!-- 1.parameterType은 1개만 올수 있다. Type이 여러개인 경우는 생략할 것.
+	 2.parameterType이 bean(DTO)인 경우 #{필드명} ->'문자열', 100
+	 3.parameterType이 map<key,value>인 경우 #{key}
+	 4.parameterType이 변수인 경우 #{변수명}
+	 5.resultType에 1개 또는 그 이상의 레코드를 검색할 경우 resultType='bean타입'만 명시
+	 6.#{}:문자열인 경우 ''(문자열)로 변환
+	 7.${}:문자열 변환 없이 문자 그대로 입력(예, 컬럼명)
+ -->
+
+<mapper namespace="com.board.icia.dao.IMemberDao">
+	<select id="getLoginResult" parameterType="com.board.icia.bean.Member" resultType="boolean">
+		SELECT COUNT(*) FROM MEMBER WHERE ID=#{id} AND PW=#{pw}
+	</select>
+	<select id="access" parameterType="member" resultType="boolean"> <!-- id에 바인딩이 되어야함 -->
+		SELECT COUNT(*) FROM M WHERE M_ID=#{m_id} AND M_PW=#{m_pw} <!-- 필드값은 #{소문자!} -->
+	</select>
+	<insert id="memberJoin" parameterType="member"> <!-- resultType은 쓰면 안돼에에에 -->
+		INSERT INTO MEMBER VALUES(#{m_id},#{m_pw},#{m_name},#{m_birth},#{m_addr},default)
+	</insert>
+	<select id="getSecurityPwd" parameterType="String" resultType="String">
+		SELECT M_PW FROM M WHERE M_ID=#{id}
+	</select>
+	<select id="getMemberInfo" parameterType="member" resultType="member">
+		SELECT * FROM MINFO WHERE M_ID=#{m_id}
+	</select>
+	
+</mapper>

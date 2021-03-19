@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	<!-- DB config -->
+	<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+		<!-- property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+		<property name="jdbcUrl" value="jdbc:oracle:thin:@localhost:1521:XE" /-->
+		<property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy" />
+		<property name="jdbcUrl" value="jdbc:log4jdbc:oracle:thin:@localhost:1521:XE" /> <!-- localhost:127.0.0.1 -->
+		<property name="username" value="MJ" />
+		<property name="password" value="1111" />
+	</bean>
+	<!-- HikariCP config -->
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+		<constructor-arg ref="hikariConfig" />	 <!-- ref:참조 -->	
+	</bean>
+	<!-- sqlSessionFactory :: mybatis가 사용 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:/mybatis-config.xml" /> <!-- classpath : src/main/java혹은resources -->
+		<property name="mapperLocations" value="classpath:/mapper/*.xml" /> <!-- 경로가 같은 게 두번 읽히면 에러 나서 임의의 폴더지정하여 xml만듦 -->
+	</bean>
+	<!-- 인터페이스 검색위한 패키지 등록 -->
+	<!-- 인터페이스 검색후 매퍼를 이용해서 IMemberDao의 구현체를 생성해서 ioc컨테이너에 등록 -->
+	
+	<mybatis-spring:scan base-package="com.board.icia.dao" />
+	
+	
+	<!-- bean>
+		<SQL SessionTemplate 설정 : DAO 클래스에서 사용>
+		<bean id="tpl" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref="sqlSessionFactory">
+	</bean-->
+	
+	<!-- 파일 업로드 설정 - id:내부적으로 참조하므로 변경하지 말것 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver" >
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="maxUploadSize" value="10000000" /> <!-- 1,000:1kb, 10,000,000 10mb -->
+		<property name="maxInMemorySize" value="10000000" /> <!-- 1,000:1kb, 10,000,000 10mb -->
+	</bean>
+</beans>
+
+
